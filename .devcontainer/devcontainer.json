@@ -44,6 +44,7 @@
   },
   "postCreateCommand": "poetry install",
   "forwardPorts": [
-    8000
+    8000,
+    54112
   ]
 }
