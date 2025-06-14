@@ -51,6 +51,9 @@ mypy = "^1.8.0"
 [tool.poetry.group.prometheus.dependencies]
 prometheus_client = "^0.18.0"
 
+[tool.poetry.group.sentencetransformers.dependencies]
+sentence_transformers = "^2.2.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

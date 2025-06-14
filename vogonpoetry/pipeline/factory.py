@@ -6,8 +6,10 @@ from typing import List, Dict, Any, Optional
 
 from vogonpoetry.config.config import Configuration
 from vogonpoetry.config.pipeline.pipeline import PipelineConfig
-from vogonpoetry.config.pipeline.steps.base import BaseStep
-from vogonpoetry.config.pipeline.steps.fork import ForkStep
+from vogonpoetry.config.pipeline.steps import StepConfig
+from vogonpoetry.config.pipeline.steps.base import BaseStepConfig
+from vogonpoetry.config.pipeline.steps.fork import ForkStepConfig
+
 
 class PipelineFactory:
     def __init__(self, step_registry: dict):
@@ -24,7 +26,7 @@ class PipelineFactory:
                 raise ValueError("Pipeline must have an 'id' field.")
             self._build_graph(pipeline.steps, parent_id=pipeline.id)
 
-    def _build_graph(self, steps: List[BaseStep], parent_id=None):
+    def _build_graph(self, steps: List[StepConfig], parent_id=None):
         for step in steps:
             step_id = step.id or self._gen_anonymous_id()
             self.nodes[step_id] = step
@@ -43,7 +45,7 @@ class PipelineFactory:
             elif parent_id:
                 self.edges.setdefault(parent_id, []).append(step_id)
 
-            if isinstance(step, ForkStep):
+            if isinstance(step, ForkStepConfig):
                 for fork_branch in step.pipelines:
                     self._build_graph(fork_branch, parent_id=step_id)
 
