@@ -1,23 +1,13 @@
+from turtle import st
 import yaml
 import uuid
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 
-class StepConfig(BaseModel):
-    id: Optional[str]
-    type: Optional[str]
-    config: Dict[str, Any] = {}
-    output_key: Optional[str]
-    input_keys: Optional[Dict[str, str]] = None
-    requires: Optional[List[str]] = None
-    if_: Optional[str] = None
-    fork: Optional[List[Dict[str, Any]]] = None
-    join: Optional[List[str]] = None
-
-class PipelineSpec(BaseModel):
-    name: str
-    description: Optional[str]
-    pipeline: List[StepConfig]
+from vogonpoetry.config.config import Configuration
+from vogonpoetry.config.pipeline.pipeline import PipelineConfig
+from vogonpoetry.config.pipeline.steps.base import BaseStep
+from vogonpoetry.config.pipeline.steps.fork import ForkStep
 
 class PipelineFactory:
     def __init__(self, step_registry: dict):
@@ -25,36 +15,37 @@ class PipelineFactory:
         self.nodes = {}
         self.edges = {}
 
-    def load_from_yaml(self, yaml_path: str):
-        with open(yaml_path) as f:
-            raw = yaml.safe_load(f)
-        spec = PipelineSpec(**raw)
-        return self._build_graph(spec.pipeline)
+    def build(self, config: Configuration):
+        return self._build_pipelines(config.pipelines)
+    
+    def _build_pipelines(self, pipelines: List[PipelineConfig]):
+        for pipeline in pipelines:
+            if not pipeline.id:
+                raise ValueError("Pipeline must have an 'id' field.")
+            self._build_graph(pipeline.steps, parent_id=pipeline.id)
 
-    def _build_graph(self, steps: List[StepConfig], parent_id=None):
-        for step_dict in steps:
-            step_cfg = StepConfig(**step_dict) if isinstance(step_dict, dict) else step_dict
-            step_id = step_cfg.id or self._gen_anonymous_id()
-            self.nodes[step_id] = step_cfg
+    def _build_graph(self, steps: List[BaseStep], parent_id=None):
+        for step in steps:
+            step_id = step.id or self._gen_anonymous_id()
+            self.nodes[step_id] = step
 
-            if step_cfg.if_:
-                self.nodes[step_id].condition = step_cfg.if_
+            if step.if_:
+                self.nodes[step_id].condition = step.if_
 
-            if step_cfg.join:
-                for dep in step_cfg.join:
+            if step.join:
+                for dep in step.join:
                     self.edges.setdefault(dep, []).append(step_id)
 
-            elif step_cfg.requires:
-                for dep in step_cfg.requires:
+            elif step.requires:
+                for dep in step.requires:
                     self.edges.setdefault(dep, []).append(step_id)
 
             elif parent_id:
                 self.edges.setdefault(parent_id, []).append(step_id)
 
-            if step_cfg.fork:
-                for fork_branch in step_cfg.fork:
-                    subpipeline = fork_branch.get("pipeline", [])
-                    self._build_graph(subpipeline, parent_id=step_id)
+            if isinstance(step, ForkStep):
+                for fork_branch in step.pipelines:
+                    self._build_graph(fork_branch, parent_id=step_id)
 
         return self._build_topo_sorted_pipeline()
 

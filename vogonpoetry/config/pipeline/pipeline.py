@@ -9,6 +9,6 @@ from vogonpoetry.config.pipeline.steps.base import BaseStep
 
 class PipelineConfig(BaseModel):
     """Base configuration for the pipeline."""
-    name: Annotated[str, Field(description="Name of the pipeline.")]
+    id: Annotated[str, Field(description="Identifier of the pipeline.")]
     description: Annotated[Optional[str], Field(default=None, description="Description of the pipeline.")]
-    steps: Annotated[BaseStep, Field(description="Steps in the pipeline.")]
+    steps: Annotated[list[BaseStep], Field(description="Steps in the pipeline.")]

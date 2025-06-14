@@ -1,7 +1,7 @@
 """Configuration loading module for Vogon Poetry."""
 
 from typing import Any, Dict, Optional
-
+import yaml
 from vogonpoetry.config.config import Configuration
 
 def load_config(config_path: str) -> Configuration:
@@ -14,4 +14,6 @@ def load_config(config_path: str) -> Configuration:
         Configuration: Loaded configuration object.
     """
     # Load the configuration from the specified path
-    raise NotImplementedError("Configuration loading is not implemented yet.")
+    with open(config_path) as f:
+        raw = yaml.safe_load(f)
+    return Configuration.model_validate(raw)
