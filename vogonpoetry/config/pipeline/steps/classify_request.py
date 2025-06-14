@@ -22,3 +22,10 @@ class ClassifyWithRemoteEmbeddings(ClassifyRequestStepConfig):
     model: Annotated[Optional[str], Field(default=None, description="Model to use for classification.")]
     headers: Annotated[Optional[Dict[str, str]], Field(default=None, description="Headers to include in the request.")]
     timeout: Annotated[Optional[int], Field(default=30, description="Timeout for the request in seconds.")]
+
+class ClassifyWithLocalEmbeddings(ClassifyRequestStepConfig):
+    """Configuration class for classify request step with local embeddings via sentence transformers."""
+    model: Annotated[str, Field(description="Model to use for classification.")]
+    embedding_function: Annotated[Optional[str], Field(default=None, description="Embedding function to use for classification.")]
+    batch_size: Annotated[Optional[int], Field(default=32, description="Batch size for processing requests.")]
+    timeout: Annotated[Optional[int], Field(default=30, description="Timeout for the request in seconds.")]
