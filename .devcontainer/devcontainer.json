@@ -26,11 +26,12 @@
       "settings": {
         "python.pythonPath": "/usr/local/bin/python",
         "python.analysis.typeCheckingMode": "standard",
-        "python.formatting.provider": "black",
+        "python.formatting.provider": "trunk.io",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.organizeImports": "explicit"
-        }
+        },
+        "editor.defaultFormatter": "trunk.io"
       },
       "extensions": [
         "ms-python.python",
@@ -42,5 +43,7 @@
     }
   },
   "postCreateCommand": "poetry install",
-  "forwardPorts": [8000]
+  "forwardPorts": [
+    8000
+  ]
 }

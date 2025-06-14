@@ -75,7 +75,7 @@ class ClassifyRequestStepWithEmbedder(ClassifyRequestStep[ClassifyWithEmbedderCo
         super().__init__(config, context)
         self.embedder = context.get_embedder(config.embedder)
         self.tag_vectors: dict[str, TagVector] = {
-            id: TagVector(vector=[], **tag.model_dump()) for id, tag in gather_tags({}, [t for t in config.tags]).items()
+            id: TagVector.model_construct(vector=[], **tag.model_dump()) for id, tag in gather_tags({}, [t for t in config.tags]).items()
         }
 
     async def initialize(self) -> None:
@@ -94,7 +94,7 @@ class ClassifyRequestStepWithEmbedder(ClassifyRequestStep[ClassifyWithEmbedderCo
         """Execute the step with the given context."""
         try:
             self.logger.debug("Classifying using embedder %s", self.embedder.name)
-            vector = await self.embedder.embed([context.user_message])
+            vector = await self.embedder.embed([context.latest_message.content])
             scores: dict[str, TagScore] = {
                 t.id: t
                 for t

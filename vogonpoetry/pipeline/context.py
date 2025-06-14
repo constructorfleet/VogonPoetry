@@ -38,6 +38,13 @@ class PipelineContext:
         """Get the user message."""
         return self._user_message
     
+    @property
+    def latest_message(self) -> Message:
+        """Get the latest message in the conversation."""
+        if not self._messages:
+            raise ValueError("No messages in the context.")
+        return self._messages[-1]
+
     def set_tags(self, tags: list[TagScore]) -> None:
         """Set the tags for the last message."""
         if not self._messages:
