@@ -3,13 +3,44 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "type=bind,source=${localWorkspaceFolder},target=/workspace",
+    "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true,
+      "username": "automatic",
+      "userUid": "automatic",
+      "userGid": "automatic"
+    },
+    "ghcr.io/jungaretti/features/vim:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.pythonPath": "/usr/local/bin/python",
+        "python.analysis.typeCheckingMode": "standard",
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "tamasfe.even-better-toml",
+        "heltonricardo.heltonricardo-vscode-organize-and-format",
+        "trunk.io"
+      ]
+    }
   },
   "postCreateCommand": "poetry install",
-  "extensions": [
-    "ms-python.python",
-    "ms-python.vscode-pylance"
-  ],
   "forwardPorts": [8000]
 }

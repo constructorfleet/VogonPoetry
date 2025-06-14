@@ -1,3 +1,7 @@
+"""
+Module containing the possible steps for the pipeline.
+"""
+
 from .classify_request import ClassifyRequestStep
 # from .retrieve_memory import RetrieveMemoryStep
 # from .select_tools import SelectToolsStep
