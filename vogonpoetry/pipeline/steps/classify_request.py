@@ -2,30 +2,15 @@ from ctypes import cast
 import itertools
 from typing import Annotated, Generic, Optional, Sequence, Tuple, TypeVar, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Tag
 from vogonpoetry.config.pipeline.steps.classify_request import ClassifyRequestConfig, ClassifyWithEmbedderConfig
 from vogonpoetry.config.pipeline.tag import TagConfig
-from vogonpoetry.pipeline.context import PipelineContext
+from vogonpoetry.pipeline.context import PipelineContext, TTag, TagScore, TagVector
 from vogonpoetry.pipeline.steps.base import PipelineStep
 
 TConfig = TypeVar("TConfig", bound=ClassifyRequestConfig)
-TTag = TypeVar("TTag", bound=Union[TagConfig, 'TagVector', 'TagScore'])
+TTag = TypeVar("TTag", bound=Union[TagConfig, TagVector, TagScore])
 
-class Tag(Generic[TTag], BaseModel):
-    """Tag configuration for the pipeline."""
-    id: Annotated[str, Field(description="Unique identifier for the tag.")]
-    name: Annotated[str, Field(description="Name of the tag.")]
-    description: Annotated[str, Field(description="Description of the tag.")]
-    sub_tags: Annotated[Optional[Sequence[TTag]], Field(default=None, description="List of sub-tags associated with this tag.")]
-    parent: Annotated[Optional[TTag], Field(description="Parent tag, if any.")]
-
-class TagVector(Tag['TagVector']):
-    """Tag vector representation for the pipeline."""
-    vector: Annotated[list[float], Field(description="Vector representation of the tag.")]
-
-
-class TagScore(Tag['TagScore']):
-    score: Annotated[float, Field(description="Similarity score of the tag.", default=0.0)]
 
 def gather_tags(all_tags: dict[str, TTag], tags: Sequence[TTag], parent: Optional[TTag] = None) -> dict[str, TTag]:
     """Recursively extract tags from a tag object."""
@@ -55,18 +40,14 @@ def process_tag(tag: TagVector, user_vector: list[float]) -> TagScore:
     )
 
 
-class ClassifyRequestStep(Generic[TConfig], PipelineStep[TConfig]):
+class ClassifyRequestStep(Generic[TConfig], PipelineStep[TConfig, set[TagScore]]):
     def __init__(self, config: TConfig, context: PipelineContext) -> None:
         """Initialize the classify request step."""
         super().__init__(config)
 
-    async def _classify(self, context: PipelineContext) -> set[TagScore]:
+    async def _process_step(self, context: PipelineContext) -> set[TagScore]:
         """Classify the request using the configured method."""
         return set([TagScore.model_construct(score=1.0, **t.model_dump()) for t in self.config.tags])
-
-    async def execute(self, context: PipelineContext) -> None:
-        """Execute the step with the given context."""
-        return await super().execute(context)
 
 
 class ClassifyRequestStepWithEmbedder(ClassifyRequestStep[ClassifyWithEmbedderConfig]):
@@ -90,7 +71,7 @@ class ClassifyRequestStepWithEmbedder(ClassifyRequestStep[ClassifyWithEmbedderCo
             self.logger.error("Error during initialization: %s", str(e))
             raise
 
-    async def _classify(self, context: PipelineContext) -> set[TagScore]:
+    async def _process_step(self, context: PipelineContext) -> set[TagScore]:
         """Execute the step with the given context."""
         try:
             self.logger.debug("Classifying using embedder %s", self.embedder.name)

@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request, HTTPException
-from pipeline.factory import PipelineFactory
-from pipeline.runner import run_pipeline
-from pipeline.steps import STEP_REGISTRY
+from vogonpoetry.pipeline.factory import PipelineFactory
+from vogonpoetry.pipeline.runner import run_pipeline
+from vogonpoetry.pipeline.steps import STEP_REGISTRY
 from uuid import uuid4
 
+from vogonpoetry.config.loader import load_config
 from vogonpoetry.tracing.store import get_trace, store_trace
 
 app = FastAPI()
@@ -17,7 +18,7 @@ async def run(request: Request):
     context["_trace_id"] = trace_id
 
     factory = PipelineFactory(step_registry=STEP_REGISTRY)
-    dag = factory.load_from_yaml(config_path)
+    dag = factory.build(load_config(config_path))
     # configure_metrics(dag.get("metrics", {"backend": "blackhole"}))
     final_context = await run_pipeline(dag, context)
     store_trace(final_context)

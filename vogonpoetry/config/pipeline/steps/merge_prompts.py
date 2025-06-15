@@ -11,5 +11,5 @@ MergeStrategy = Literal['concatenate'] | Literal['json'] | Literal['replace']
 
 class MergePromptsStepConfig(BaseStepConfig):
     """Base configuration class for merging prompts in the pipeline."""
-    type: Annotated[Literal['merge_prompts'], Field('merge_prompts', pattern=r'^merge_prompts$')]
+    type: Literal['merge_prompts'] = 'merge_prompts'
     strategy: Annotated[MergeStrategy, Field(description="The strategy to use for merging prompts.", default='concatenate')]

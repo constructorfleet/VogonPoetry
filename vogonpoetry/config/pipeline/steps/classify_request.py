@@ -13,7 +13,7 @@ ClassifyMethod = Literal['tags', 'embedder']
 
 class ClassifyRequestStepConfig(BaseStepConfig):
     """Base configuration class for classify request step in the pipeline."""
-    type: Annotated[Literal['classify_request'], Field('classify_request', pattern=r'^classify_request$')]
+    type: Literal['classify_request'] = 'classify_request'
     tags: Annotated[list[TagConfig], Field(min_length=1, description="List of tags to classify the request with.")]
 
 class ClassifyWithTagsConfig(ClassifyRequestStepConfig):

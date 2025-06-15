@@ -14,5 +14,5 @@ class Configuration(BaseModel):
     name: Annotated[str, Field(description="Name of the configuration.")]
     description: Annotated[Optional[str], Field(default=None, description="Description of the configuration.")]
     version: Annotated[Optional[str], Field(default=None, description="Version of the configuration.")]
-    pipelines: Annotated[list[PipelineConfig], Field(description="List of pipelines in the configuration.")]
+    pipeline: Annotated[PipelineConfig, Field(description="List of pipelines in the configuration.")]
     embedders: Annotated[list[EmbedderConfig], Field(description="List of embedders in the configuration.")]

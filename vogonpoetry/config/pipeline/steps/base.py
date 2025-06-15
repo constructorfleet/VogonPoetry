@@ -1,14 +1,18 @@
 """Base configuration for pipeline steps."""
-from typing import Annotated, Optional
+from typing import Annotated, ClassVar, Literal, Optional
 from pydantic import BaseModel, Discriminator, Field
 from pydantic_settings import BaseSettings
 
 
 class BaseStepConfig(BaseModel):
     """Base configuration for pipeline steps."""
-    step: Annotated['BaseStepConfig', Field(discriminator="type")]
-    id: Annotated[Optional[str], Field(description="Unique identifier for the step.")]
-    if_: Annotated[Optional[str], Field("if", description="Condition to execute the step.")]
-    join: Annotated[Optional[list[str]], Field("join", description="Ids of the steps to join.")]
-    requires: Annotated[Optional[list[str]], Field(description="Ids of the steps required for this step.")]
-    fork: Annotated[Optional[list['BaseStepConfig']], Field(description="Fork branches for the step.")]
+    id: Optional[str] = Field(description="Unique identifier for the step.", default=None)
+    if_: Optional[str] = Field(alias="if", description="Condition to execute the step.", default=None)
+    join: Optional[list[str]] = Field(alias="join", description="Ids of the steps to join.", default=None)
+    requires: Optional[list[str]] = Field(description="Ids of the steps required for this step.", default=None)
+    # fork: Optional[list[list['StepConfig']]] = Field(description="Fork branches for the step.", default=None) # type: ignore
+    output_key: Optional[str] = Field(description="Key for the output of the step.", default=None)
+
+    model_config = {
+        "populate_by_name": True,
+    }

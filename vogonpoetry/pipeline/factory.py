@@ -1,14 +1,9 @@
-from turtle import st
-import yaml
 import uuid
-from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
+from typing import List
 
 from vogonpoetry.config.config import Configuration
 from vogonpoetry.config.pipeline.pipeline import PipelineConfig
 from vogonpoetry.config.pipeline.steps import StepConfig
-from vogonpoetry.config.pipeline.steps.base import BaseStepConfig
-from vogonpoetry.config.pipeline.steps.fork import ForkStepConfig
 
 
 class PipelineFactory:
@@ -18,13 +13,12 @@ class PipelineFactory:
         self.edges = {}
 
     def build(self, config: Configuration):
-        return self._build_pipelines(config.pipelines)
+        return self._build_pipeline(config.pipeline)
     
-    def _build_pipelines(self, pipelines: List[PipelineConfig]):
-        for pipeline in pipelines:
-            if not pipeline.id:
-                raise ValueError("Pipeline must have an 'id' field.")
-            self._build_graph(pipeline.steps, parent_id=pipeline.id)
+    def _build_pipeline(self, pipeline: PipelineConfig):
+        if not pipeline.id:
+            raise ValueError("Pipeline must have an 'id' field.")
+        return self._build_graph(pipeline.steps, parent_id=pipeline.id)
 
     def _build_graph(self, steps: List[StepConfig], parent_id=None):
         for step in steps:
@@ -45,9 +39,9 @@ class PipelineFactory:
             elif parent_id:
                 self.edges.setdefault(parent_id, []).append(step_id)
 
-            if isinstance(step, ForkStepConfig):
-                for fork_branch in step.pipelines:
-                    self._build_graph(fork_branch, parent_id=step_id)
+            # if step.fork:
+            #     for fork_branch in step.fork:
+            #         self._build_graph(fork_branch, parent_id=step_id)
 
         return self._build_topo_sorted_pipeline()
 
