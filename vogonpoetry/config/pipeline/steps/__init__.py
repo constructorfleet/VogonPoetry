@@ -4,13 +4,13 @@ from typing import Annotated, Union
 
 from pydantic import Field
 
-from vogonpoetry.config.pipeline.steps.classify_request import ClassifyRequestStepConfig
+from vogonpoetry.config.pipeline.steps.classify_request import ClassifyStepConfig
 from vogonpoetry.config.pipeline.steps.merge_prompts import MergePromptsStepConfig
 
 
 StepConfig = Annotated[
     Union[
-        ClassifyRequestStepConfig,
+        ClassifyStepConfig,
         MergePromptsStepConfig,
     ],
     Field(

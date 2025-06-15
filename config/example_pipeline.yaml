@@ -7,131 +7,97 @@ pipeline:
   steps:
     - id: classify
       type: classify_request
-      method: tags
-      tags:
-        - id: "media"
-          name: "Media"
-          description: "Anything related to media like movies, music, or TV"
-          sub_tags:
-            - id: "media.movies"
-              name: "Movies"
-              description: "Films, cinema, or related topics"
-            - id: "media.tv"
-              name: "TV Shows"
-              description: "Television series or episodes"
-            - id: "media.new"
-              name: "New"
-              description: "Recently added, latest, or newest content"
-        - id: "home"
-          name: "Home Automation"
-          description: "Smart home devices and automation"
-          sub_tags:
-            - id: "home.security"
-              name: "Security"
-              description: "Security systems, alerts, cameras"
-            - id: "home.lighting"
-              name: "Lighting"
-              description: "Smart lighting systems"
-            - id: "home.climate"
-              name: "Climate Control"
-              description: "Thermostats, HVAC systems"
-            - id: "home.fan"
-              name: "Fan"
-              description: "Smart fans and ventilation systems"
-            - id: "home.switch"
-              name: "Switch"
-              description: "Smart switches and outlets"
-            - id: "home.sensor"
-              name: "Sensor"
-              description: "Smart sensors for various applications"
-        - id: "weather"
-          name: "Weather"
-          description: "Weather forecasts, current conditions"
-          sub_tags:
-            - id: "weather.forecast"
-              name: "Forecast"
-              description: "Weather forecasts for different regions"
-            - id: "weather.current"
-              name: "Current Conditions"
-              description: "Current weather conditions"
-            - id: "weather.alerts"
-              name: "Alerts"
-              description: "Weather alerts and warnings"
-        - id: "web"
-          name: "Web Services"
-          description: "Web-based services and APIs"
-          sub_tags:
-            - id: "web.search"
-              name: "Search"
-              description: "Web search engines and APIs"
-        - id: "memory"
-          name: "Memory"
-          description: "Memory-related topics"
-          sub_tags:
-            - id: "memory.user"
-              name: "User Memory"
-              description: "User related memory"
-            - id: "memory.projects"
-              name: "Projects Memory"
-              description: "Memory related to projects"
-            - id: "memory.tasks"
-              name: "Tasks Memory"
-              description: "Memory related to tasks"
-            - id: "memory.notes"
-              name: "Notes Memory"
-              description: "Memory related to notes"
-            - id: "memory.ideas"
-              name: "Ideas Memory"
-              description: "Memory related to ideas"
-            - id: "memory.research"
-              name: "Research Memory"
-              description: "Memory related to research"
-        - id: "announcements"
-          name: "Announcements"
-          description: "Announcements and updates"
-          sub_tags:
-            - id: "announcements.updates"
-              name: "Updates"
-              description: "Updates to previous announcements"
-            - id: "announcements.alerts"
-              name: "Alert Announcements"
-              description: "Urgent alert announcements"
+      options:
+        method: tags
+        tags:
+          - id: "media"
+            name: "Media"
+            description: "Anything related to media like movies, music, or TV"
+            sub_tags:
+              - id: "media.movies"
+                name: "Movies"
+                description: "Films, cinema, or related topics"
+              - id: "media.tv"
+                name: "TV Shows"
+                description: "Television series or episodes"
+              - id: "media.new"
+                name: "New"
+                description: "Recently added, latest, or newest content"
+          - id: "home"
+            name: "Home Automation"
+            description: "Smart home devices and automation"
+            sub_tags:
+              - id: "home.security"
+                name: "Security"
+                description: "Security systems, alerts, cameras"
+              - id: "home.lighting"
+                name: "Lighting"
+                description: "Smart lighting systems"
+              - id: "home.climate"
+                name: "Climate Control"
+                description: "Thermostats, HVAC systems"
+              - id: "home.fan"
+                name: "Fan"
+                description: "Smart fans and ventilation systems"
+              - id: "home.switch"
+                name: "Switch"
+                description: "Smart switches and outlets"
+              - id: "home.sensor"
+                name: "Sensor"
+                description: "Smart sensors for various applications"
+          - id: "weather"
+            name: "Weather"
+            description: "Weather forecasts, current conditions"
+            sub_tags:
+              - id: "weather.forecast"
+                name: "Forecast"
+                description: "Weather forecasts for different regions"
+              - id: "weather.current"
+                name: "Current Conditions"
+                description: "Current weather conditions"
+              - id: "weather.alerts"
+                name: "Alerts"
+                description: "Weather alerts and warnings"
+          - id: "web"
+            name: "Web Services"
+            description: "Web-based services and APIs"
+            sub_tags:
+              - id: "web.search"
+                name: "Search"
+                description: "Web search engines and APIs"
+          - id: "memory"
+            name: "Memory"
+            description: "Memory-related topics"
+            sub_tags:
+              - id: "memory.user"
+                name: "User Memory"
+                description: "User related memory"
+              - id: "memory.projects"
+                name: "Projects Memory"
+                description: "Memory related to projects"
+              - id: "memory.tasks"
+                name: "Tasks Memory"
+                description: "Memory related to tasks"
+              - id: "memory.notes"
+                name: "Notes Memory"
+                description: "Memory related to notes"
+              - id: "memory.ideas"
+                name: "Ideas Memory"
+                description: "Memory related to ideas"
+              - id: "memory.research"
+                name: "Research Memory"
+                description: "Memory related to research"
+          - id: "announcements"
+            name: "Announcements"
+            description: "Announcements and updates"
+            sub_tags:
+              - id: "announcements.updates"
+                name: "Updates"
+                description: "Updates to previous announcements"
+              - id: "announcements.alerts"
+                name: "Alert Announcements"
+                description: "Urgent alert announcements"
       output_key: tags
-
-      # - id: retrieve_mem
-      #   type: retrieve_memory
-      #   requires: ["classify"]
-      #   config:
-      #     top_k: 5
-      #     tag_key: "tags"
-      #   output_key: memories
-
-      # - id: select_tools
-      #   type: select_tools
-      #   requires: ["classify"]
-      #   config:
-      #     filter_tags_from: "tags"
-      #   output_key: tools
-
-      # - id: prompt_build
-      #   type: prompt_builder
-      #   requires: ["retrieve_mem", "select_tools"]
-      #   config:
-      #     template: "rag_template"
-      #     input_keys:
-      #       memory: "memories"
-      #       tools: "tools"
-      #       user_input: "input"
-      #   output_key: prompt
-
-      # - id: send
-      #   type: send_to_llm
-      #   requires: ["prompt_build"]
-      #   config:
-      #     provider: "openrouter"
-      #     model: "mistral:7b-instruct"
-      #     input_key: "prompt"
-      #   output_key: final_response
 
 embedders:
   - type: local
