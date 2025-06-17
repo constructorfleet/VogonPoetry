@@ -1,19 +1,19 @@
 import asyncio
-from vogonpoetry.config.pipeline.pipeline import PipelineConfig
-from vogonpoetry.pipeline.context import PipelineContext
-from vogonpoetry.pipeline.factory import PipelineFactory
-from vogonpoetry.pipeline.runner import run_pipeline
-from vogonpoetry.pipeline.steps import STEP_REGISTRY
+from vogonpoetry.app import App
 import sys
-import logging
-from vogonpoetry.config.loader import load_config
+from vogonpoetry.logging import logger
+from vogonpoetry.loader import load_config
 
-_logger = logging.getLogger(__name__)
+_logger = logger(__name__)
 
 if __name__ == "__main__":
     config_path = sys.argv[1] if len(sys.argv) > 1 else "config/example_pipeline.yaml"
-    factory = PipelineFactory(step_registry=STEP_REGISTRY)
-    dag = factory.build(load_config(config_path))
-    _logger.info("Pipeline DAG", dag)
-    context = PipelineContext(dag.get("embedders", {}))
-    asyncio.run(run_pipeline(dag, context))
+    app = App(load_config(config_path))
+    _logger.info("Pipeline", pipeline=app.pipeline)
+    context = app.create_context()
+    async def run_app():
+        result = await app.run(context)
+        _logger.info(f"Pipeline result", result=result)
+    asyncio.run(run_app())
+    # context = PipelineContext(dag.get("embedders", {}))
+    # asyncio.run(run_pipeline(dag, context))

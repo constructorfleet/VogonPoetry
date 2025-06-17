@@ -12,5 +12,7 @@ def setup_logging():
         ],
     )
     
+def get_logger(name: str = __name__) -> structlog.BoundLogger:
+    return structlog.get_logger(name)
 
-logger = structlog.get_logger()
+logger = get_logger

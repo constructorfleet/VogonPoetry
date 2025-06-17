@@ -1,0 +1,1 @@
+"""Tag configuration for the pipeline."""

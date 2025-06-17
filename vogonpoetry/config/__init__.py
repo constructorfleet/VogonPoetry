@@ -1,1 +1,0 @@
-"""Configuration module for the Vogon Poetry package."""

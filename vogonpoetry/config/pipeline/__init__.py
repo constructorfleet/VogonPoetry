@@ -1,1 +1,0 @@
-"""Pipeline configuration for the Vogon Poetry project."""

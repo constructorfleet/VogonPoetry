@@ -1,17 +1,19 @@
-"""
-Module containing the possible steps for the pipeline.
-"""
+"""Pipeline step configuration for the Vogon Poetry project."""
+from __future__ import annotations
+from typing import Annotated, Union
 
-from .classify_request import ClassifyRequestStep
-# from .retrieve_memory import RetrieveMemoryStep
-# from .select_tools import SelectToolsStep
-# from .prompt_builder import PromptBuilderStep
-# from .send_to_llm import SendToLLMStep
+from pydantic import Field
+from vogonpoetry.pipeline.steps.fork_pipeline import ForkStep
+from vogonpoetry.pipeline.steps.types import PipelineStep as StepUnion
 
-STEP_REGISTRY = {
-    "classify_request": ClassifyRequestStep,
-    # "retrieve_memory": RetrieveMemoryStep,
-    # "select_tools": SelectToolsStep,
-    # "prompt_builder": PromptBuilderStep,
-    # "send_to_llm": SendToLLMStep,
-}
+
+PipelineStep = Annotated[
+    Union[
+        StepUnion,
+        ForkStep,
+    ],
+    Field(
+        description="Configuration for pipeline steps in the Vogon Poetry project.",
+        discriminator="type"
+    )
+]
