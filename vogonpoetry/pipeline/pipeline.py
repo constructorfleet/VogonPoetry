@@ -1,9 +1,10 @@
-""""Pipeline configuration for the Vogon Poetry project."""
+""" "Pipeline configuration for the Vogon Poetry project."""
+
 import asyncio
-import inspect
 import time
 from typing import Any, Optional
 
+from pymetrics.instruments import Counter, Timer
 from pydantic import BaseModel, Field
 
 from vogonpoetry.logging import logger
@@ -11,9 +12,10 @@ from vogonpoetry.context import BaseContext
 from vogonpoetry.embedders import Embedder
 from vogonpoetry.pipeline.steps import PipelineStep
 from vogonpoetry.pipeline.steps.base import BaseStep
-from vogonpoetry.pipeline.steps.fork_pipeline import ForkStep
+from vogonpoetry.pipeline.steps.fork import ForkStep
 
 _logger = logger("topological_sort")
+
 
 def topological_sort(nodes: dict[str, PipelineStep], edges):
     from collections import defaultdict, deque
@@ -44,7 +46,9 @@ def topological_sort(nodes: dict[str, PipelineStep], edges):
     return result
 
 
-async def run_steps(self, context: BaseContext, steps: list[PipelineStep]) -> BaseContext:
+async def run_steps(
+    self, context: BaseContext, steps: list[PipelineStep]
+) -> BaseContext:
     # trace_id = context.get("_trace_id")
 
     def eval_condition(expr, ctx):
@@ -52,27 +56,16 @@ async def run_steps(self, context: BaseContext, steps: list[PipelineStep]) -> Ba
             return eval(expr, {}, ctx)
         except:
             return False
-
-    async def invoke_step(step: PipelineStep, ctx: BaseContext, step_id, step_type):
-        # counter = metrics.step_counter(step_id)
-        # timer = metrics.step_timer(step_id)
-        # counter.inc()
-        # with timer.time():
-        return await step.execute(ctx)
-
     async def run_step(step: PipelineStep, ctx: BaseContext) -> BaseContext:
         self._logger.info("running_step", step=step.id, type=step.type)
-
-        t0 = time.time()
-        result = await invoke_step(step, ctx, step.id, step.type)
-        t1 = time.time()
+        result = await step.execute(ctx)
 
         if step.output_key:
             ctx.data.update({step.output_key: result})
         return ctx
 
     try:
-        ordered_steps = topological_sort(self._nodes, self._edges)
+        topological_sort(self._nodes, self._edges)
     except ValueError as e:
         self._logger.error("topology_error", error=str(e))
         raise
@@ -88,8 +81,11 @@ async def run_steps(self, context: BaseContext, steps: list[PipelineStep]) -> Ba
 
 class Pipeline(BaseModel):
     """Base configuration for the pipeline."""
+
     id: str = Field(description="Identifier of the pipeline.")
-    description: Optional[str] = Field(default=None, description="Description of the pipeline.")
+    description: Optional[str] = Field(
+        default=None, description="Description of the pipeline."
+    )
     steps: list[PipelineStep] = Field(description="Steps in the pipeline.")
 
     def model_post_init(self, context: Any) -> None:
@@ -116,8 +112,8 @@ class Pipeline(BaseModel):
 
     async def run(self, context: BaseContext) -> BaseContext:
         """Run the pipeline with the given context."""
-        await asyncio.gather(*[
-            step.initialize(context)
-            for step in self.steps
-        ])
-        return await run_steps(self, context, self.steps)
+        with context.metrics.timer("pipeline.process_time", pipeline_id=self.id):
+            with context.metrics.timer("pipeline.initialization_time", pipeline_id=self.id):
+                await asyncio.gather(*[step.initialize(context) for step in self.steps])
+            with context.metrics.timer("pipeline.execution_time", pipeline_id=self.id):
+                return await run_steps(self, context, self.steps)

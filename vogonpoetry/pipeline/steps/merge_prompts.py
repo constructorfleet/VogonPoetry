@@ -17,7 +17,6 @@ class MergePromptsStepOptions(BaseModel):
 class MergePromptsStep(BaseStep[MergePromptsStepOptions, Dict[str, Any]]):
     """Base configuration class for merging prompts in the pipeline."""
     type: Literal['merge_prompts'] = 'merge_prompts'
-    strategy: Annotated[MergeStrategy, Field(description="The strategy to use for merging prompts.", default='concatenate')]
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"MergePromptsStep-{self.id}")

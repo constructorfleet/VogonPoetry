@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated, Union
 
 from pydantic import Field
-from vogonpoetry.pipeline.steps.fork_pipeline import ForkStep
+from vogonpoetry.pipeline.steps.fork import ForkStep
 from vogonpoetry.pipeline.steps.types import PipelineStep as StepUnion
 
 

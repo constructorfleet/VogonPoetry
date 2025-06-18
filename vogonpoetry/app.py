@@ -2,17 +2,20 @@ import pip
 from pydantic import BaseModel, Field
 from vogonpoetry.config import Configuration
 from vogonpoetry.context import BaseContext
-from vogonpoetry.embedders import Embedder, EmbedderTypeAdapter  
+from vogonpoetry.embedders import Embedder, EmbedderTypeAdapter
 from vogonpoetry.messages.base import BaseMessage
+from vogonpoetry.metrics import MetricsCollection
 from vogonpoetry.pipeline.pipeline import Pipeline
-
 
 
 class App:
     def __init__(self, config: Configuration):
         self.config = config
-        self.embedders = {embedder.name: EmbedderTypeAdapter.validate_python(embedder) for embedder in config.embedders}
-    
+        self.embedders = {
+            embedder.name: EmbedderTypeAdapter.validate_python(embedder)
+            for embedder in config.embedders
+        }
+
     @property
     def pipeline(self) -> Pipeline:
         return self.config.pipeline
@@ -21,19 +24,21 @@ class App:
         return BaseContext(
             visited_steps=[],
             embedders=self.embedders,
+            tools=[],
             data={},
             messages=[
                 BaseMessage(role="system", content="You are a helpful assistant.")
-            ]
+            ],
+            metrics=MetricsCollection(),
         )
-    
+
     async def run(self, context: BaseContext) -> BaseContext:
         return await self.pipeline.run(context)
 
 
-#def build(self, config: Configuration) -> Pipeline:
+# def build(self, config: Configuration) -> Pipeline:
 #         return self._build_pipeline(config.pipeline)
-    
+
 #     def _build_pipeline(self, pipeline: Pipeline):
 #         if not pipeline.id:
 #             raise ValueError("Pipeline must have an 'id' field.")
@@ -77,4 +82,3 @@ class App:
 
 #     def _gen_anonymous_id(self):
 #         return f"anon_{uuid.uuid4().hex[:8]}"
-

@@ -11,9 +11,12 @@ if __name__ == "__main__":
     app = App(load_config(config_path))
     _logger.info("Pipeline", pipeline=app.pipeline)
     context = app.create_context()
+
     async def run_app():
         result = await app.run(context)
         _logger.info(f"Pipeline result", result=result)
+
     asyncio.run(run_app())
+    context.metrics.publish_all()
     # context = PipelineContext(dag.get("embedders", {}))
     # asyncio.run(run_pipeline(dag, context))

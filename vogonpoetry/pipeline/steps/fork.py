@@ -5,6 +5,7 @@ from typing import Annotated, Any, Literal, Sequence, TypeVar, Union
 
 from pydantic import BaseModel, Field
 from vogonpoetry.context import BaseContext
+from vogonpoetry.pipeline import steps
 from vogonpoetry.pipeline.steps.base import BaseStep
 from vogonpoetry.pipeline.steps.types import PipelineStep as StepUnion
 
@@ -52,11 +53,10 @@ TStep = TypeVar("TStep", bound=BaseModel)
 class ForkStep(BaseStep[ForkStepOptions, Any]):
     """Pipeline fork step configuration for the Vogon Poetry project."""
     type: Literal['fork'] = 'fork'
-    options: ForkStepOptions = Field(description="Options for the classify request step.")
 
-    async def initialize(self, context: Any) -> None:
+    async def initialize(self, context: BaseContext) -> None:
         """Initialize the step."""
-        self._logger.info("Initializing fork step", steps=len(self.options.steps))
+        
         await asyncio.gather(*[
             step.initialize(context)
             for step in self.options.steps
