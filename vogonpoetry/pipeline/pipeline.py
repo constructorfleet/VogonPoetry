@@ -1,4 +1,5 @@
 """"Pipeline configuration for the Vogon Poetry project."""
+import asyncio
 import inspect
 import time
 from typing import Any, Optional
@@ -9,6 +10,8 @@ from vogonpoetry.logging import logger
 from vogonpoetry.context import BaseContext
 from vogonpoetry.embedders import Embedder
 from vogonpoetry.pipeline.steps import PipelineStep
+from vogonpoetry.pipeline.steps.base import BaseStep
+from vogonpoetry.pipeline.steps.fork_pipeline import ForkStep
 
 _logger = logger("topological_sort")
 
@@ -41,6 +44,48 @@ def topological_sort(nodes: dict[str, PipelineStep], edges):
     return result
 
 
+async def run_steps(self, context: BaseContext, steps: list[PipelineStep]) -> BaseContext:
+    # trace_id = context.get("_trace_id")
+
+    def eval_condition(expr, ctx):
+        try:
+            return eval(expr, {}, ctx)
+        except:
+            return False
+
+    async def invoke_step(step: PipelineStep, ctx: BaseContext, step_id, step_type):
+        # counter = metrics.step_counter(step_id)
+        # timer = metrics.step_timer(step_id)
+        # counter.inc()
+        # with timer.time():
+        return await step.execute(ctx)
+
+    async def run_step(step: PipelineStep, ctx: BaseContext) -> BaseContext:
+        self._logger.info("running_step", step=step.id, type=step.type)
+
+        t0 = time.time()
+        result = await invoke_step(step, ctx, step.id, step.type)
+        t1 = time.time()
+
+        if step.output_key:
+            ctx.data.update({step.output_key: result})
+        return ctx
+
+    try:
+        ordered_steps = topological_sort(self._nodes, self._edges)
+    except ValueError as e:
+        self._logger.error("topology_error", error=str(e))
+        raise
+    self._logger.info("pipeline_start", pipeline=self.id, steps=self.steps)
+    for step in self.steps:
+        context = await run_step(step, context)
+
+    # if trace_id:
+    #     write_trace(trace_id, context.get("_trace", []))
+
+    return context
+
+
 class Pipeline(BaseModel):
     """Base configuration for the pipeline."""
     id: str = Field(description="Identifier of the pipeline.")
@@ -49,83 +94,30 @@ class Pipeline(BaseModel):
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"Pipeline-{self.id}")
-        self._nodes: dict[str, PipelineStep] = {
-            step.id: step for step in self.steps
-        }
-        self._edges = {}
-        return super().model_post_init(context)
+        self._nodes: dict[str, PipelineStep] = {step.id: step for step in self.steps}
+        self._edges: dict[str, set[str]] = {step.id: set() for step in self.steps}
 
-    async def run(self, context: BaseContext):
-        visited: set[str] = set()
-        # trace_id = context.get("_trace_id")
+        def collect_edges(parent_step):
+            if hasattr(parent_step.options, "steps"):
+                for child in parent_step.options.steps:
+                    self._edges[parent_step.id].add(child.id)
+                    if child.id not in self._nodes:
+                        self._nodes[child.id] = child
+                    if child.id not in self._edges:
+                        self._edges[child.id] = set()
 
-        def eval_condition(expr, ctx):
-            try:
-                return eval(expr, {}, ctx)
-            except:
-                return False
+        for step in self.steps:
+            collect_edges(step)
 
-        async def invoke_step(step, ctx, step_id, step_type):
-            # counter = metrics.step_counter(step_id)
-            # timer = metrics.step_timer(step_id)
-            # counter.inc()
-            # with timer.time():
-            if inspect.iscoroutinefunction(step.execute):
-                return await step.execute(ctx)
-            else:
-                return step.execute(ctx)
+        step_ids = list(self._nodes.keys())
+        dupes = set([x for x in step_ids if step_ids.count(x) > 1])
+        if dupes:
+            raise ValueError(f"Duplicate step IDs found (after namespacing?): {dupes}")
 
-        async def run_step(step_id, ctx: BaseContext):
-            if step_id in visited:
-                return
-            visited.add(step_id)
-
-            step = self._nodes[step_id]
-
-            if step.should_skip(ctx):
-                self._logger.info("skipping_step", step=step_id, reason="condition_false")
-                return
-
-            # if step_cfg.fork:
-            #     ctxs = []
-            #     logger.info("forking", step=step_id, branches=len(step_cfg.fork))
-            #     for i, branch in enumerate(step_cfg.fork):
-            #         sub_ctx = PipelineContext(ctx._embedders)
-            #         factory = PipelineFactory(STEP_REGISTRY)
-            #         fork_dag = factory._build_graph(branch.get("pipeline", []), parent_id=f"{step_id}_fork_{i}")
-            #         fork_ctx = await run_pipeline(fork_dag, sub_ctx)
-            #         ctxs.append(fork_ctx)
-                # ctx.update(merge_contexts(ctxs, strategy="prefix_keys"))
-
-            else:
-                self._logger.info("running_step", step=step_id, type=step.type)
-
-                t0 = time.time()
-                result = await invoke_step(step, ctx, step.id, step.type)
-                t1 = time.time()
-
-                if step.output_key:
-                    ctx.data.update({step.output_key: result})
-                # ctx.setdefault("_trace", []).append({
-                #     "step": step_id,
-                #     "type": step_cfg.type,
-                #     "output_key": step_cfg.output_key,
-                #     "start_time": round(t0, 3),
-                #     "end_time": round(t1, 3),
-                #     "duration_ms": round((t1 - t0) * 1000, 3),
-                #     "keys": list(ctx.keys())
-                # })
-
-        try:
-            ordered_steps = topological_sort(self._nodes, self._edges)
-        except ValueError as e:
-            self._logger.error("topology_error", error=str(e))
-            raise
-        self._logger.info("pipeline_start", pipeline=self.id, steps=ordered_steps)
-        for step_id in ordered_steps:
-            await run_step(step_id, context)
-
-        # if trace_id:
-        #     write_trace(trace_id, context.get("_trace", []))
-
-        return context
+    async def run(self, context: BaseContext) -> BaseContext:
+        """Run the pipeline with the given context."""
+        await asyncio.gather(*[
+            step.initialize(context)
+            for step in self.steps
+        ])
+        return await run_steps(self, context, self.steps)

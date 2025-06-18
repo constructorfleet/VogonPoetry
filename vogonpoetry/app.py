@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from vogonpoetry.config import Configuration
 from vogonpoetry.context import BaseContext
 from vogonpoetry.embedders import Embedder, EmbedderTypeAdapter  
+from vogonpoetry.messages.base import BaseMessage
 from vogonpoetry.pipeline.pipeline import Pipeline
 
 
@@ -17,7 +18,14 @@ class App:
         return self.config.pipeline
 
     def create_context(self) -> BaseContext:
-        return BaseContext(embedders=self.embedders, data={}, messages=[])
+        return BaseContext(
+            visited_steps=[],
+            embedders=self.embedders,
+            data={},
+            messages=[
+                BaseMessage(role="system", content="You are a helpful assistant.")
+            ]
+        )
     
     async def run(self, context: BaseContext) -> BaseContext:
         return await self.pipeline.run(context)

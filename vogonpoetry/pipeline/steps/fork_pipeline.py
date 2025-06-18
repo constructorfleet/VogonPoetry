@@ -56,6 +56,7 @@ class ForkStep(BaseStep[ForkStepOptions, Any]):
 
     async def initialize(self, context: Any) -> None:
         """Initialize the step."""
+        self._logger.info("Initializing fork step", steps=len(self.options.steps))
         await asyncio.gather(*[
             step.initialize(context)
             for step in self.options.steps
@@ -64,10 +65,16 @@ class ForkStep(BaseStep[ForkStepOptions, Any]):
     
     async def _process_step(self, context: BaseContext) -> Any:
         """Process the fork step."""
+        self._logger.info("Processing fork step", steps=len(self.options.steps))
         results = await asyncio.gather(*[
-            step.execute(context) for step in self.options.steps
+            step.execute(context)
+            for step in self.options.steps
         ])
+        return await self.merge_results(results)
 
+
+    async def merge_results(self, results: Sequence[Any]) -> Any:
+        self._logger.info("Merging results from forked steps", strategy=self.options.merge_strategy, results=results)
         if self.options.merge_strategy == "concatenate":
             merged = {}
             for result in results:

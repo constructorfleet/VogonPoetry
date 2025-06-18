@@ -34,9 +34,18 @@ class BaseStep(BaseModel, Generic[TStepOptions, TOutput]):
 
     async def execute(self, context: BaseContext) -> TOutput:
         """Execute the step with the given context."""
+        if context.has_visited(self.id):
+            self._logger.warning("Step already been visited. Skipping execution.", id=self.id)
+            return context.data.get(self.output_key) if self.output_key else None # type: ignore
+        context.visit(self.id)
+        if self.should_skip(context):
+            self._logger.info("Skipping step due to condition.", id=self.id, condition=self.if_)
+            return context.data.get(self.output_key) if self.output_key else None # type: ignore
         try:
-            self._logger.debug("Executing step: %s", self.id)
-            return await self._process_step(context)
+            self._logger.info("Executing step", id=self.id)
+            result = await self._process_step(context)
+            self._logger.info("Executed step.", id=self.id, result=result)
+            return result
         except Exception as e:
             self._logger.error("Error executing step %s: %s", self.id, str(e))
             raise

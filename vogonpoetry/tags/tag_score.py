@@ -22,5 +22,9 @@ def process_tag(tag: TagVector, user_vector: list[float]) -> TagScore:
     similarity = cosine_similarity(tag.vector, user_vector)
     return TagScore.model_construct(
         score=similarity,
-        **tag.model_dump()
+        id=tag.id,
+        name=tag.name,
+        description=tag.description,
+        parent=tag.parent,
+        sub_tags=tag.sub_tags,
     )

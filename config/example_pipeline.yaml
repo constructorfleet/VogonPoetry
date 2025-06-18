@@ -7,8 +7,10 @@ pipeline:
   steps:
     - id: fork
       type: fork
+      output_key: forked
       options:
-        merge_strategy: concatenate
+        merge_strategy: prefix
+        prefix: "classifier_"
         steps:
           - id: classify1
             type: classify_request
@@ -104,14 +106,21 @@ pipeline:
                       description: "Urgent alert announcements"
             output_key: tags
           - id: classify2
-            requires: [classify1]
             type: classify_request
             options:
-              method: tags
+              method: embedder
               tags:
-                - id: "new_tag"
-                  name: "New Tag"
-                  description: "Some new Tag"
+                - id: "announcements"
+                  name: "Announcements"
+                  description: "Announcements and updates"
+                  sub_tags:
+                    - id: "announcements.updates"
+                      name: "Updates"
+                      description: "Updates to previous announcements"
+                    - id: "announcements.alerts"
+                      name: "Alert Announcements"
+                      description: "Urgent alert announcements"
+              embedder: transformers
             output_key: tags
 
 embedders:

@@ -10,7 +10,7 @@ from vogonpoetry.messages.base import BaseMessage
 
 class BaseContext(BaseModel):
     """Base context class for the pipeline."""
-
+    visited_steps: Annotated[list[str], Field(description="List of visited step IDs in the pipeline.", default=[])]
     data: Annotated[dict[str, Any], Field(description="Arbitrary key-value pairs for the context.", default={})]
     messages: Annotated[list[BaseMessage[Any]], Field(description="List of messages in the context.", default=[])]
     embedders: Annotated[dict[str, Embedder], Field(description="Embedders associated with the context.", default={})]
@@ -20,6 +20,12 @@ class BaseContext(BaseModel):
         """Get the last message from the context."""
         return self.messages[-1]
     
+    def visit(self, step_id: str) -> None:
+        self.visited_steps.append(step_id)
+
+    def has_visited(self, step_id: str) -> bool:
+        return step_id in self.visited_steps
+
     def merge(self, *contexts: 'BaseContext', strategy="prefix_keys") -> None:
         if strategy == "prefix_keys":
             for i, ctx in enumerate(contexts):
