@@ -16,7 +16,6 @@ class RemoteEmbedder(BaseEmbedder):
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"RemoteEmbedder-{self.name}")
-        return super().model_post_init(context)
 
     async def embed(
         self,

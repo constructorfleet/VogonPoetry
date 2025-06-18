@@ -1,4 +1,7 @@
 """Request classification step configuration for the pipeline."""
+import asyncio
+import math
+from random import randint
 from typing import Annotated, Any, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
@@ -39,24 +42,23 @@ class ClassifyStep(BaseStep[ClassifyStepOptions, dict[str, TagScore]]):
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"ClassifyStep-{self.id}")
-        return super().model_post_init(context)
+        self._tagConfigs = gather_tags({}, self.options.tags)
+        self._tag_vectors: dict[str, TagVector] = {}
+        self._embedder: Optional[BaseEmbedder] = None
 
     async def initialize(self, context: BaseContext) -> None:
         """Initialize the step."""
-        self.tagConfigs = gather_tags({}, self.options.tags)
-        self.tag_vectors: dict[str, TagVector] = {}
-        self.embedder: Optional[BaseEmbedder] = None
         if self.options.method == "tags":
             self._logger.debug("Initializing classify request step with tags")
-            self.tag_vectors: dict[str, TagVector] = {
+            self._tag_vectors: dict[str, TagVector] = {
                 id: TagVector(vector=[], **tag.model_dump()) for id, tag in gather_tags({}, [t for t in self.options.tags]).items()
             }
-        elif self.options.method == "remote" and self.embedder is not None and isinstance(self.embedder, BaseEmbedder):
+        elif self.options.method == "remote" and self._embedder is not None and isinstance(self._embedder, BaseEmbedder):
             try:
-                self._logger.debug("Initializing classify request step with embedder %s", self.embedder.name)
-                keys = list(self.tag_vectors.keys())
-                vectors = await self.embedder.embed([self.tag_vectors[t].description for t in keys]) # type: ignore
-                self.tag_vectors = {k: TagVector(vector=vector, **self.tag_vectors[k].model_dump()) for k, vector in zip(keys, vectors)}
+                self._logger.debug("Initializing classify request step with embedder %s", self._embedder.name)
+                keys = list(self._tag_vectors.keys())
+                vectors = await self.embedder.embed([self._tag_vectors[t].description for t in keys]) # type: ignore
+                self._tag_vectors = {k: TagVector(vector=vector, **self._tag_vectors[k].model_dump()) for k, vector in zip(keys, vectors)}
                 self._logger.info("Initialization completed successfully.")
             except Exception as e:
                 self._logger.error("Error during initialization: %s", str(e))
@@ -65,8 +67,9 @@ class ClassifyStep(BaseStep[ClassifyStepOptions, dict[str, TagScore]]):
     async def _process_step(self, context: BaseContext) -> dict[str, TagScore]:
         """Classify the request using the configured method."""
         if self.options.method == "tags":
+            await asyncio.sleep(randint(1, 10))  # Yield control to the event loop
             return {t.id: TagScore(score=1.0, **t.model_dump()) for t in self.options.tags}
-        elif self.options.method == "remote" and self.embedder is not None:
+        elif self.options.method == "remote" and self._embedder is not None:
             latest_message = context.latest_message
             if latest_message is None or not latest_message.content:
                 self._logger.warning("No latest message content found in context.")
@@ -76,15 +79,15 @@ class ClassifyStep(BaseStep[ClassifyStepOptions, dict[str, TagScore]]):
                 self._logger.warning("Latest message content is empty or not a string.")
                 return {}
             try:
-                self._logger.debug("Classifying using embedder %s", self.embedder.name)
-                vector = await self.embedder.embed([content])
+                self._logger.debug("Classifying using embedder %s", self._embedder.name)
+                vector = await self._embedder.embed([content])
                 scores: dict[str, TagScore] = {
                     t.id: t
                     for t
                     in [
                         process_tag(tag, vector[0])
                         for tag
-                        in self.tag_vectors.values()
+                        in self._tag_vectors.values()
                     ]
                     if t.score > self.options.threshold
                 }

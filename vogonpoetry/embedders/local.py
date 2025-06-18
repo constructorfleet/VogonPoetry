@@ -14,7 +14,6 @@ class LocalEmbedder(BaseEmbedder):
         """Initialize the sentence transformer model."""
         self._model = SentenceTransformer(self.model_name)
         self._logger = logger(f"LocalEmbedder-{self.name}")
-        return super().model_post_init(context)
 
     async def embed(
         self,

@@ -21,7 +21,6 @@ class MergePromptsStep(BaseStep[MergePromptsStepOptions, Dict[str, Any]]):
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"MergePromptsStep-{self.id}")
-        return super().model_post_init(context)
 
     async def _process_step(self, context: BaseContext) -> Dict[str, Any]:
         return {}

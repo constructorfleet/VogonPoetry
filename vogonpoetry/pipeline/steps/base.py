@@ -10,7 +10,7 @@ TOutput = TypeVar('TOutput')
 
 class BaseStep(BaseModel, Generic[TStepOptions, TOutput]):
     """Base configuration for pipeline steps."""
-    id: str = Field(description="Unique identifier for the step.", default_factory=lambda: f"step_{uuid4()}")
+    id: str = Field(description="Unique identifier for the step.")
     if_: Optional[str] = Field(alias="if", description="Condition to execute the step.", default=None)
     requires: Optional[list[str]] = Field(description="Ids of the steps required for this step.", default=None)
     output_key: Optional[str] = Field(description="Key for the output of the step.", default=None)
@@ -27,7 +27,6 @@ class BaseStep(BaseModel, Generic[TStepOptions, TOutput]):
 
     def model_post_init(self, context: Any) -> None:
         self._logger = logger(f"Step-{self.id}")
-        return super().model_post_init(context)
 
     async def initialize(self, context: BaseContext) -> None:
         """Initialize the step. This method can be overridden by subclasses."""
