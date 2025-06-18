@@ -11,7 +11,7 @@ TOutput = TypeVar('TOutput')
 class BaseStep(BaseModel, Generic[TStepOptions, TOutput]):
     """Base configuration for pipeline steps."""
     id: str = Field(description="Unique identifier for the step.")
-    if_: Optional[str] = Field(alias="if", description="Condition to execute the step.", default=None)
+    if_: Optional[str] = Field(serialization_alias="if", description="Condition to execute the step.", default=None)
     requires: Optional[list[str]] = Field(description="Ids of the steps required for this step.", default=None)
     output_key: Optional[str] = Field(description="Key for the output of the step.", default=None)
     options: TStepOptions = Field(description="Options for the step.")

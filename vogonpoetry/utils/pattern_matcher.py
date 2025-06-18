@@ -15,7 +15,6 @@ class MatchMode(str):
 
 class PatternMatcher(BaseModel):
     pattern: MatcherString = Field(..., description="A regex (r'...'), glob (*foo*), or snake_case string")
-    matcher: Matcher = Field(init=False)
 
     model_config = {
         "arbitrary_types_allowed": True,
@@ -26,18 +25,25 @@ class PatternMatcher(BaseModel):
         return value
 
     def model_post_init(self, __context):
-        self.matcher = self._build_matcher(self.pattern)
+        self._matcher = self._build_matcher(self.pattern)
 
     def _build_matcher(self, value: str) -> Matcher:
         if value.startswith("r'") or value.startswith('r"'):
             # Regex pattern
             pattern = value[2:-1]
             regex = re.compile(pattern)
-            return lambda s: bool(regex.search(s))
+            return lambda s: regex.search(s) is not None
+        elif value.startswith("/") and value.endswith("/"):
+            # Regex pattern with slashes
+            pattern = value[1:-1]
+            regex = re.compile(pattern)
+            return lambda s: regex.search(s) is not None
         elif "*" in value or "?" in value or "[" in value:
             # Glob pattern
             return lambda s: fnmatch.fnmatch(s, value)
         else:
             # Snake case match
-            canonical = value.replace("_", "").lower()
-            return lambda s: canonical in s.replace("_", "").lower()
+            return lambda s: value in s
+        
+    def matches(self, value: str) -> bool:
+        return self._matcher(value)

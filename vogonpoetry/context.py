@@ -58,6 +58,8 @@ class BaseContext:
     @property
     def latest_message(self) -> Optional[BaseMessage[Any]]:
         """Get the last message from the context."""
+        if not self.messages:
+            return None
         return self.messages[-1]
 
     def visit(self, step_id: str) -> None:

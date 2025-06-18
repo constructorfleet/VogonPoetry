@@ -49,7 +49,7 @@ class ClassifyStep(BaseStep[ClassifyStepOptions, dict[str, TagScore]]):
                 self._logger.debug("Initializing classify request step with embedder %s", self._embedder.name)
                 keys = list(self._tag_vectors.keys())
                 vectors = await self._embedder.embed([self._tag_vectors[t].description for t in keys]) # type: ignore
-                self._tag_vectors = {k: TagVector(vector=vector, **self._tag_vectors[k].model_dump()) for k, vector in zip(keys, vectors)}
+                self._tag_vectors = {k: TagVector(vector=list(vector), **self._tag_vectors[k].model_dump()) for k, vector in zip(keys, vectors)}
                 self._logger.info("Initialization completed successfully.")
                 return await super().initialize(context)
             except Exception as e:
@@ -78,7 +78,7 @@ class ClassifyStep(BaseStep[ClassifyStepOptions, dict[str, TagScore]]):
                     for id, t
                     in TagUtilities[TagVector, TagScore].scored_tag_map(
                         list(self._tag_vectors.values()),
-                        lambda t: cosine_similarity(cast(TagVector, t).vector, vector[0])
+                        lambda t: cosine_similarity(cast(TagVector, t).vector, list(vector[0]))
                     ).items()
                     if t.score > self.options.threshold
                 }

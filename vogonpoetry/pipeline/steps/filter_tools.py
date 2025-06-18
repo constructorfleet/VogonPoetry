@@ -29,7 +29,7 @@ class FilterToolsStep(BaseStep[FilterToolsOptions, Sequence[Any]]):
     """Pipeline step for filtering tools based on specified criteria."""
     type: Literal['filter_tools'] = 'filter_tools'
 
-    async def initialize(self, context: Any) -> None:
+    async def initialize(self, context: Any) -> Any:
         """Initialize the step."""
         self._logger.info("Initializing filter tools step", options=self.options)
         if self.options.type == 'embedder_similarity':
@@ -62,9 +62,11 @@ class FilterToolsStep(BaseStep[FilterToolsOptions, Sequence[Any]]):
             texts = [tool.description for tool in tools]
             texts.append(context.latest_message.content)
             vectors = await self._embedder.embed(texts)
+            print(f"Vectors: {vectors}")
+            print(f"Tools: {tools}")
             return [
                 tool for tool, vector in zip(tools, vectors[:-1])
-                if cosine_similarity(vector, vectors[-1]) >= threshold
+                if cosine_similarity(list(vector), list(vectors[-1])) >= threshold
             ]
         else:
             raise ValueError(f"Unknown filter type: {self.options.type}")

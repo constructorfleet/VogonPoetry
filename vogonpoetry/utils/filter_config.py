@@ -20,9 +20,9 @@ class FilterConfig(BaseModel):
     
     def filter(self, items: MutableSequence[T], prop_fn: Callable[[T], str] = default_prop_fn) -> MutableSequence[T]:
         if self.whitelist:
-            return [item for item in items if any(matcher.matcher(prop_fn(item)) for matcher in self.whitelist)]
+            return [item for item in items if any(matcher.matches(prop_fn(item)) for matcher in self.whitelist)]
         elif self.blacklist:
-            return [item for item in items if not any(matcher.matcher(prop_fn(item)) for matcher in self.blacklist)]
+            return [item for item in items if not any(matcher.matches(prop_fn(item)) for matcher in self.blacklist)]
         else:
             return items
 
