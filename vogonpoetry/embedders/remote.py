@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Literal, Optional
+from typing import Annotated, Any, Literal, MutableSequence, Optional, Sequence
 
 import httpx
 from pydantic import Field
@@ -19,9 +19,9 @@ class RemoteEmbedder(BaseEmbedder):
 
     async def embed(
         self,
-        texts: list[str],
+        texts: MutableSequence[str],
         **kwargs,
-    ) -> list[list[float]]:
+    ) -> MutableSequence[Sequence[float]]:
         """Embed the input texts using the remote embedder model."""
         self._logger.debug("Classifying using remote embeddings from %s", self.url)
         payload: dict[str, Any] = {"input": texts}

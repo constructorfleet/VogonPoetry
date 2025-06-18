@@ -17,6 +17,10 @@ class PatternMatcher(BaseModel):
     pattern: MatcherString = Field(..., description="A regex (r'...'), glob (*foo*), or snake_case string")
     matcher: Matcher = Field(init=False)
 
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
+
     @field_validator("pattern", mode="after")
     def resolve_pattern(cls, value: str) -> str:
         return value

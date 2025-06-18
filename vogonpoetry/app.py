@@ -1,4 +1,3 @@
-import pip
 from pydantic import BaseModel, Field
 from vogonpoetry.config import Configuration
 from vogonpoetry.context import BaseContext

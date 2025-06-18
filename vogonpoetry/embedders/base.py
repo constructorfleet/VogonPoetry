@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, MutableSequence, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -13,8 +13,8 @@ class BaseEmbedder(BaseModel):
 
     async def embed(
         self,
-        texts: list[str],
+        texts: MutableSequence[str],
         **kwargs,
-    ) -> list[list[float]]:
+    ) -> MutableSequence[Sequence[float]]:
         """Embed the input texts using the embedder model."""
         raise NotImplementedError("Embed method not implemented.")
